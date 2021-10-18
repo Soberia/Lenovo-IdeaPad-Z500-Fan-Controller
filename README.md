@@ -36,14 +36,21 @@ If you want the fan works only after CPU temperature exceeds certain value, you 
 ```cmd
 FanController.exe --temperature 70
 ```
-If you want the program always runs with system startup, press `Win + R` and type `shell:startup`,
-then make a new shortcut on the opened window and put this on it: (you should insert compelete program path)
-```cmd
-C:\FanController.exe --interval 0 --temperature 70
+If you want the program always runs with system startup, create a scheduled task in PowerShell
+with administrator privileges: (you should insert compelete program path)
+```powershell
+Register-ScheduledTask `
+    -TaskName "FanController" `
+    -Trigger (New-ScheduledTaskTrigger -AtLogOn) `
+    -Principal (New-ScheduledTaskPrincipal -GroupId "BUILTIN\Administrators" -RunLevel Highest) `
+    -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 0 -ExecutionTimeLimit (New-TimeSpan -Seconds 0)) `
+    -Action (New-ScheduledTaskAction -Execute "C:\FanController.exe" -Argument "--interval 0 --temperature 70")
 ```
 And now the program always runs at boot time and in background mode, and only enables the fan when CPU temperature exceeds 70°C.
-For disable it just remove the shortcut file.
-</br>
+For disable it run this in PowerShell to remove the created scheduled task:
+```powershell
+Unregister-ScheduledTask -TaskName "FanController" -Confirm:$false
+```
 For more information about parameters, you can try this:
 ```cmd
 FanController.exe --help
